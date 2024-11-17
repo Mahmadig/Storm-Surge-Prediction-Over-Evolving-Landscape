@@ -20,62 +20,6 @@ import shap
 ## shap can be used to explain the output
 
 
-### two options added to implement the skip conection and link to models in parallel. by default they are cascade
-
-## for implementing skip conenction
-def Residual_model(input_layer, n_filters, kernel_size):
-
-    pad_layer_zero_1 = ZeroPadding1D(padding=(kernel_size - 1))(input_layer)
-    conv_layer = Conv1D(filters=n_filters//4, kernel_size=1, padding='same',activation='relu')(pad_layer_zero_1)
-    bn_layer = BatchNormalization()(conv_layer)
-    dropout_layer = Dropout(drop)(bn_layer)
-
-    pad_layer_zero_2 = ZeroPadding1D(padding=(kernel_size - 1))(dropout_layer)
-    conv_layer_2 = Conv1D(filters=n_filters//4, kernel_size=kernel_size, padding='same',activation='relu')(pad_layer_zero_2)
-    bn_layer_2 = BatchNormalization()(conv_layer_2)
-    dropout_layer_2 = Dropout(drop)(bn_layer_2)
-
-
-    pad_layer_zero_3 =ZeroPadding1D(padding=(kernel_size - 1))(dropout_layer_2)
-    conv_layer_3 = Conv1D(filters=n_filters, kernel_size=1,  padding='same',activation='relu')(pad_layer_zero_3)
-    bn_layer_3 = BatchNormalization()(conv_layer_3)
-    dropout_layer_3 = Dropout(drop)(bn_layer_3)
-
-    pad_layer_zero_4 = ZeroPadding1D(padding=(kernel_size - 1))(dropout_layer_3)
-    conv_layer_4 = Conv1D(filters=n_filters, kernel_size=kernel_size,  padding='valid',activation='relu')(pad_layer_zero_4)
-    bn_layer_4 = BatchNormalization()(conv_layer_4)
-    dropout_layer_4 = Dropout(drop)(bn_layer_4)
-
-
-    RES = Conv1D(filters=n_filters, kernel_size=kernel_size, padding='same')(input_layer)
-    residual_layer = Add()([RES, dropout_layer_3])
-    residual_layer = ReLU()(residual_layer)
-    return residual_layer
-
-def build_model(input_shape, n_filters):
-    input_layer = Input(shape=input_shape)
-
-    Residual_layer = Residual_model(input_layer, n_filters=n_filters, kernel_size=3)
-    #no attention needed since it increases the computional cost
-    #attention = attention_block(Residual_model)
-
-    #cnn_layer = Conv1D(filters=n_filters * 2, kernel_size=3, padding='same', activation='relu')(attention)
-    #cnn_layer = BatchNormalization()(cnn_layer)
-    #cnn_layer = Conv1D(filters=n_filters * 2, kernel_size=3, padding='same', activation='relu')(cnn_layer)
-    #cnn_layer = BatchNormalization()(cnn_layer)
-    dropout = Dropout(drop)(Residual_layer)
-    dropout= keras.layers.GlobalAveragePooling1D()(dropout)
-    dropout = Dense(256, activation='relu')(dropout)
-    #dropout = Dense(128, activation='relu')(dropout)
-    #dropout = Dense(256, activation='relu')(dropout)
-    #dropout = Dense(256, activation='relu')(dropout)
-
-    output_layer = Dense(1, activation='linear')(dropout)
-
-    model = Model(inputs=input_layer, outputs=output_layer)
-    return model
-
-
 def custom_loss(y_true, y_pred):
     n = tf.shape(y_true)
     loss = (tf.sqrt(tf.reduce_sum(tf.square(y_true - y_pred)))) / (2 * tf.cast(n, tf.float32))
@@ -225,6 +169,63 @@ fold10_indices = remaining_indices[(38512526+24559408):(43490780+24559408)]
 fold_indices = [fold1_indices, fold2_indices, fold3_indices,
                 fold4_indices, fold5_indices,fold6_indices,
                 fold7_indices, fold8_indices, fold9_indices, fold10_indices,fold11_indices]
+
+### two options added to implement the skip conection and link to models in parallel. by default they are cascade
+
+## for implementing skip conenction, follow these steps
+
+
+def Residual_model(input_layer, filter_number, kernel_size):
+
+    pad_layer_zero_1 = ZeroPadding1D(padding=(kernel_size - 1))(input_layer)
+    conv1D_layer_1 = Conv1D(filters=n_filters//4, kernel_size=1, padding='same',activation='relu')(pad_layer_zero_1)
+    batchnorm_layer_1 = BatchNormalization()(conv1D_layer_1)
+    drop_layer_1 = Dropout(drop)(batchnorm_layer_1)
+
+    pad_layer_zero_2 = ZeroPadding1D(padding=(kernel_size - 1))(drop_layer_1)
+    conv1D_layer_2 = Conv1D(filters=n_filters//4, kernel_size=kernel_size, padding='same',activation='relu')(pad_layer_zero_2)
+    batchnorm_layer_2 = BatchNormalization()(conv1D_layer_2)
+    drop_layer_2 = Dropout(drop)(batchnorm_layer_2)
+
+
+    pad_layer_zero_3 =ZeroPadding1D(padding=(kernel_size - 1))(drop_layer_2)
+    conv1D_layer_3 = Conv1D(filters=n_filters, kernel_size=1,  padding='same',activation='relu')(pad_layer_zero_3)
+    batchnorm_layer_3 = BatchNormalization()(conv1D_layer_3)
+    drop_layer_3 = Dropout(drop)(batchnorm_layer_3)
+
+    pad_layer_zero_4 = ZeroPadding1D(padding=(kernel_size - 1))(drop_layer_3)
+    conv1D_layer_4 = Conv1D(filters=n_filters, kernel_size=kernel_size,  padding='valid',activation='relu')(pad_layer_zero_4)
+    batchnorm_layer_4 = BatchNormalization()(conv1D_layer_4)
+    drop_layer_4 = Dropout(drop)(batchnorm_layer_4)
+
+
+    RES = Conv1D(filter_number=filter_number, kernel_size=kernel_size, padding='same')(input_layer)
+    RES_layer = Add()([RES, drop_layer_4])
+    RES_layer = ReLU()(RES_layer)
+    return RES_layer
+
+def build_model(input_shape, filter_number):
+    input_layer = Input(shape=input_shape)
+
+    RES_layer = Residual_model(input_layer, filter_number=filter_number, kernel_size=3)
+    #no attention needed since it increases the computional cost
+    #attention = my_block_attention(Residual_model)
+
+    #cnn_layer = Conv1D(filters=n_filters * 2, kernel_size=3, padding='same', activation='relu')(attention)
+    #cnn_layer = BatchNormalization()(cnn_layer)
+    #cnn_layer = Conv1D(filters=n_filters * 2, kernel_size=3, padding='same', activation='relu')(cnn_layer)
+    #cnn_layer = BatchNormalization()(cnn_layer)
+    Drop_out = Dropout(drop)(RES_layer)
+    Drop_out= keras.layers.GlobalAveragePooling1D()(Drop_out)
+    Drop_out = Dense(256, activation='relu')(Drop_out)
+    #Drop_out = Dense(256, activation='relu')(Drop_out)
+    #Drop_out = Dense(256, activation='relu')(Drop_out)
+    #Drop_out = Dense(256, activation='relu')(Drop_out)
+
+    Drop_out_final = Dense(1, activation='linear')(Drop_out)
+
+    model = Model(inputs=input_layer, outputs=Drop_out_final)
+    return model
 
 for i, (train_indices, test_indices) in enumerate(kf.split(fold_indices)):
     current_train_indices = [idx for fold_idx in train_indices for idx in fold_indices[fold_idx]]
