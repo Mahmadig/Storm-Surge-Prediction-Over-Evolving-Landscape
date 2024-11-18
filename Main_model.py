@@ -172,29 +172,29 @@ fold_indices = [fold1_indices, fold2_indices, fold3_indices,
 
 ### two options added to implement the skip conection and link to models in parallel. by default they are cascade
 
-## for implementing skip conenction, follow these steps
+## for implementing skip conenction, follow these steps, but adjust the code accordingly
 
 
 def Residual_model(input_layer, filter_number, kernel_size):
 
     pad_layer_zero_1 = ZeroPadding1D(padding=(kernel_size - 1))(input_layer)
-    conv1D_layer_1 = Conv1D(filters=n_filters//4, kernel_size=1, padding='same',activation='relu')(pad_layer_zero_1)
+    conv1D_layer_1 = Conv1D(filters=filter_number//4, kernel_size=1, padding='same',activation='relu')(pad_layer_zero_1)
     batchnorm_layer_1 = BatchNormalization()(conv1D_layer_1)
     drop_layer_1 = Dropout(drop)(batchnorm_layer_1)
 
     pad_layer_zero_2 = ZeroPadding1D(padding=(kernel_size - 1))(drop_layer_1)
-    conv1D_layer_2 = Conv1D(filters=n_filters//4, kernel_size=kernel_size, padding='same',activation='relu')(pad_layer_zero_2)
+    conv1D_layer_2 = Conv1D(filters=filter_number//4, kernel_size=kernel_size, padding='same',activation='relu')(pad_layer_zero_2)
     batchnorm_layer_2 = BatchNormalization()(conv1D_layer_2)
     drop_layer_2 = Dropout(drop)(batchnorm_layer_2)
 
 
     pad_layer_zero_3 =ZeroPadding1D(padding=(kernel_size - 1))(drop_layer_2)
-    conv1D_layer_3 = Conv1D(filters=n_filters, kernel_size=1,  padding='same',activation='relu')(pad_layer_zero_3)
+    conv1D_layer_3 = Conv1D(filters=filter_number, kernel_size=1,  padding='same',activation='relu')(pad_layer_zero_3)
     batchnorm_layer_3 = BatchNormalization()(conv1D_layer_3)
     drop_layer_3 = Dropout(drop)(batchnorm_layer_3)
 
     pad_layer_zero_4 = ZeroPadding1D(padding=(kernel_size - 1))(drop_layer_3)
-    conv1D_layer_4 = Conv1D(filters=n_filters, kernel_size=kernel_size,  padding='valid',activation='relu')(pad_layer_zero_4)
+    conv1D_layer_4 = Conv1D(filters=filter_number, kernel_size=kernel_size,  padding='valid',activation='relu')(pad_layer_zero_4)
     batchnorm_layer_4 = BatchNormalization()(conv1D_layer_4)
     drop_layer_4 = Dropout(drop)(batchnorm_layer_4)
 
@@ -207,20 +207,20 @@ def Residual_model(input_layer, filter_number, kernel_size):
 def build_model(input_shape, filter_number):
     input_layer = Input(shape=input_shape)
 
-    RES_layer = Residual_model(input_layer, filter_number=filter_number, kernel_size=3)
+    RES_layer = Residual_model(input_layer, filter_number=filter_number, kernel_size=kernel_size)
     #no attention needed since it increases the computional cost
     #attention = my_block_attention(Residual_model)
 
-    #cnn_layer = Conv1D(filters=n_filters * 2, kernel_size=3, padding='same', activation='relu')(attention)
+    #cnn_layer = Conv1D(filters=filter_number, kernel_size=kernel_size, padding='same', activation='relu')(attention)
     #cnn_layer = BatchNormalization()(cnn_layer)
-    #cnn_layer = Conv1D(filters=n_filters * 2, kernel_size=3, padding='same', activation='relu')(cnn_layer)
+    #cnn_layer = Conv1D(filters=filter_number , kernel_size=kernel_size, padding='same', activation='relu')(cnn_layer)
     #cnn_layer = BatchNormalization()(cnn_layer)
     Drop_out = Dropout(drop)(RES_layer)
     Drop_out= keras.layers.GlobalAveragePooling1D()(Drop_out)
     Drop_out = Dense(256, activation='relu')(Drop_out)
-    #Drop_out = Dense(256, activation='relu')(Drop_out)
-    #Drop_out = Dense(256, activation='relu')(Drop_out)
-    #Drop_out = Dense(256, activation='relu')(Drop_out)
+    Drop_out = Dense(256, activation='relu')(Drop_out)
+    Drop_out = Dense(256, activation='relu')(Drop_out)
+    Drop_out = Dense(256, activation='relu')(Drop_out)
 
     Drop_out_final = Dense(1, activation='linear')(Drop_out)
 
