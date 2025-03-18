@@ -253,7 +253,7 @@ for i, (train_indices, test_indices) in enumerate(kf.split(fold_indices)):
     model.summary()
     plot_model(model, to_file='cnn_mlp_model.png', show_shapes=True)
 
-    model.fit(X_train,y_train,verbose=1 ,batch_size= batch_number, epochs=epochs_number, validation_data=(X_test, y_test), callbacks=[learning_rate_reduction] )
+    model.fit(X_train,y_train,verbose=1 ,batch_size= batch_number, epochs=epochs_number, validation_split=(0.2), callbacks=[learning_rate_reduction] )
     pred = model.predict(X_test)
     # Measure this fold's RMSE
     score = np.sqrt(metrics.mean_squared_error(pred,y_test))
