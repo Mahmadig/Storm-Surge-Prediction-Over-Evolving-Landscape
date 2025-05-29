@@ -238,7 +238,11 @@ for i, (train_indices, test_indices) in enumerate(kf.split(fold_indices)):
     scaler.fit(X_train)
     X_train = scaler.transform(X_train)
     X_test = scaler.transform(X_test)
-
+    ### (best configuration is when you treat features as time steps, with kernel size 3), make sure to adjust the model accordingly
+    ### X_train = X_train.reshape(X_train.shape[0], X_train.shape[1],1)
+    ### X_test = X_test.reshape(X_test.shape[0], X_test.shape[1],1)
+    
+    #### without that it is faster but RMSE will be a bit worst
     X_train = X_train.reshape(X_train.shape[0],1, X_train.shape[1])
     X_test = X_test.reshape(X_test.shape[0],1, X_test.shape[1])
 
